@@ -1,0 +1,68 @@
+// 基础类型定义，供全站使用
+
+export type MemberStatus = 'normal' | 'left';
+export type SessionStatus = 'draft' | 'closed' | 'locked';
+export type ParticipationStatus = 'participated' | 'leave' | 'unknown' | 'unset';
+export type MemberRole = 'trainee' | 'senior' | 'member' | 'leader';
+
+export interface Member {
+  id: string;
+  nickname: string;
+  qq?: string;
+  status: MemberStatus;
+  joinAt?: string;
+  leaveAt?: string;
+  remark?: string;
+  role?: MemberRole;
+}
+
+export interface ActivityType {
+  id: string;
+  code: 'fortress' | 'battlefield' | string;
+  name: string;
+  scheduleRule?: { weekday: number; time: string };
+  enabled: boolean;
+  durationMinutes?: number; // 默认场次时长
+}
+
+export interface ActivitySession {
+  id: string;
+  typeId: string;
+  name: string;
+  startAt: string;
+  endAt?: string;
+  status: SessionStatus;
+  notes?: string;
+}
+
+export interface Participation {
+  id: string;
+  sessionId: string;
+  memberId: string;
+  status: ParticipationStatus;
+  score?: number;
+  note?: string;
+  setBy?: string;
+  setAt?: string;
+}
+
+export interface ParticipationWithSession extends Participation {
+  session: ActivitySession;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface LeaderboardItem {
+  member: Member;
+  totalScore: number;
+  avgScore: number;
+  attendance: number; // 0-1
+  times: number;
+}
+
+
