@@ -2,16 +2,17 @@ FROM node:24-alpine as build-stage
 
 WORKDIR /app
 RUN corepack enable
+RUN corepack prepare pnpm@latest --activate
 RUN npm config set registry https://registry.npmmirror.com
 
 # RUN corepack prepare pnpm@latest --activate
 
 
 COPY  package.json  ./
-RUN npm install --frozen-lockfile
+RUN pnpm install
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 
 FROM nginx as production-stage
