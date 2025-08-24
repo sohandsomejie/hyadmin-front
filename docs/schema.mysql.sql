@@ -1,4 +1,4 @@
--- 火影忍者组织管理系统 - MySQL 8.0 Schema
+-- 忍者组织管理系统 - MySQL 8.0 Schema
 
 CREATE DATABASE IF NOT EXISTS ninja_org
   DEFAULT CHARACTER SET utf8mb4
@@ -104,9 +104,36 @@ VALUES
   ('battlefield', '天地战场', 1, 3, '20:00:00', 120)
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
-
+USE ninja_org;
 
 INSERT INTO users (username, password_hash)
 VALUES ('admin', '$2a$10$0dqzs49yDByNt6vbX2GQY.sOvHiq5Va0VJMFyA8xWiws2FVVyoh0O')
 ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash);
 
+
+
+
+-- ========== ai_parse_jobs ==========
+CREATE TABLE IF NOT EXISTS ai_parse_jobs (
+  id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  session_id BIGINT UNSIGNED NOT NULL,
+  request_id VARCHAR(64) NULL UNIQUE,
+  image_url TEXT NULL,
+  image_path VARCHAR(512) NULL,
+  mime VARCHAR(100) NULL,
+  size_bytes INT UNSIGNED NULL,
+  content_sha256 CHAR(64) NULL,
+  status ENUM('queued','processing','succeeded','failed','canceled','timeout') NOT NULL,
+  data JSON NULL,
+  error TEXT NULL,
+  ai_trace_id VARCHAR(128) NULL,
+  callback_token VARCHAR(64) NOT NULL,
+  version INT NOT NULL DEFAULT 0,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  expires_at DATETIME(3) NULL,
+  INDEX idx_ai_jobs_status_created (status, created_at),
+  INDEX idx_ai_jobs_sha256 (content_sha256),
+  INDEX idx_ai_jobs_session_created (session_id, created_at),
+  CONSTRAINT fk_ai_jobs_session FOREIGN KEY (session_id) REFERENCES activity_sessions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

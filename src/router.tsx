@@ -11,6 +11,7 @@ import LeaderboardPage from './pages/reports/Leaderboard';
 import ActivitiesOverviewPage from './pages/activities/Overview';
 import ActivityTypeSessionsPage from './pages/activities/TypeSessions';
 import { useAuthStore } from './store/auth';
+import WorkflowSettingsPage from './pages/settings/Workflow';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
       { path: 'activities', element: <ActivitiesOverviewPage /> },
       { path: 'activities/:typeId', element: <ActivityTypeSessionsPage /> },
       { path: 'reports', element: <LeaderboardPage /> },
+      { path: 'settings/workflow', element: <WorkflowSettingsPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

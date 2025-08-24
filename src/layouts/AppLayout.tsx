@@ -1,5 +1,5 @@
 import { Layout, Menu, Breadcrumb } from 'antd';
-import { TeamOutlined, CalendarOutlined, BarChartOutlined, LogoutOutlined, ArrowLeftOutlined, MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
+import { TeamOutlined, CalendarOutlined, BarChartOutlined, LogoutOutlined, ArrowLeftOutlined, MenuUnfoldOutlined, MenuFoldOutlined, SettingOutlined } from '@ant-design/icons';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { useEffect, useState } from 'react';
@@ -29,7 +29,8 @@ export default function AppLayout() {
   const selectedKeys = [
     location.pathname.startsWith('/members') ? 'members' :
     location.pathname.startsWith('/activities') ? 'sessions' :
-    location.pathname.startsWith('/reports') ? 'reports' : '',
+    location.pathname.startsWith('/reports') ? 'reports' :
+    location.pathname.startsWith('/settings') ? 'settings' : '',
   ];
 
   return (
@@ -49,6 +50,7 @@ export default function AppLayout() {
             { key: 'members', icon: <TeamOutlined />, label: <Link to="/members">成员</Link> },
             { key: 'sessions', icon: <CalendarOutlined />, label: <Link to="/activities">活动</Link> },
             { key: 'reports', icon: <BarChartOutlined />, label: <Link to="/reports">统计</Link> },
+            { key: 'settings', icon: <SettingOutlined />, label: <Link to="/settings/workflow">设置</Link> },
             { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: () => { logout(); navigate('/login'); } },
           ]}
         />

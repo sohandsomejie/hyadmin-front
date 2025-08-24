@@ -1,5 +1,5 @@
-import { http } from './http';
-import type { ActivitySession, ActivityType, LeaderboardItem, Member, Participation, ParticipationStatus, ParticipationWithSession, User } from '../types';
+import { http, httpMultipart } from './http';
+import type { ActivitySession, ActivityType, LeaderboardItem, Member, Participation, ParticipationStatus, ParticipationWithSession, User, AiParseJob } from '../types';
 
 // 登录/认证
 export async function apiLogin(username: string, password: string): Promise<{ token: string; user: User } | null> {
@@ -21,6 +21,9 @@ export async function apiGetMember(id: string): Promise<Member> { return http(`/
 export async function apiUpsertMember(member: Partial<Member> & { id?: string }): Promise<Member> {
   if (member.id) return http(`/members/${member.id}`, { method: 'PUT', body: JSON.stringify(member) });
   return http('/members', { method: 'POST', body: JSON.stringify(member) });
+}
+export async function apiDeleteMember(id: string): Promise<{ id: string; deleted: boolean }> {
+  return http(`/members/${id}`, { method: 'DELETE' });
 }
 export async function apiListMemberParticipations(memberId: string, params: { typeId?: string; from?: string; to?: string; page?: number; pageSize?: number } = {}): Promise<{ items: ParticipationWithSession[]; total: number }> {
   const q = new URLSearchParams();
@@ -58,7 +61,13 @@ export async function apiUpsertSession(payload: Partial<ActivitySession> & { id?
 export async function apiDeleteSession(id: string): Promise<void> { return http(`/sessions/${id}`, { method: 'DELETE' }); }
 
 // 参与
-export async function apiListParticipations(sessionId: string): Promise<Participation[]> { return http(`/sessions/${sessionId}/participations`); }
+export async function apiListParticipations(sessionId: string, params: { page?: number; pageSize?: number } = {}): Promise<{ items: Participation[]; total: number }> {
+  const q = new URLSearchParams();
+  if (params.page) q.set('page', String(params.page));
+  if (params.pageSize) q.set('pageSize', String(params.pageSize));
+  const search = q.toString();
+  return http(`/sessions/${sessionId}/participations${search ? `?${search}` : ''}`);
+}
 export async function apiBulkUpsertParticipations(sessionId: string, items: Array<{ memberId: string; status: ParticipationStatus; score?: number; note?: string }>): Promise<Participation[]> {
   return http(`/sessions/${sessionId}/participations/bulk-upsert`, { method: 'POST', body: JSON.stringify(items) });
 }
@@ -86,6 +95,31 @@ export async function apiLeaderboard(params: { typeId?: string; period?: 'custom
   if (params.page) q.set('page', String(params.page));
   if (params.pageSize) q.set('pageSize', String(params.pageSize));
   return http(`/reports/leaderboard?${q.toString()}`);
+}
+
+// AI 解析（真实接口，根据 docs/api.md）
+export async function apiCreateParses(sessionId: string | number, files: File[], workflowUrl: string, requestId?: string, workflowApiKey?: string): Promise<{ items: AiParseJob[]; total: number } | AiParseJob> {
+  const form = new FormData();
+  files.forEach(f => form.append('file', f));
+  form.append('workflow_url', workflowUrl);
+  if (requestId) form.append('request_id', requestId);
+  if (workflowApiKey) form.append('workflow_api_key', workflowApiKey);
+  return httpMultipart(`/sessions/${sessionId}/parses`, form);
+}
+
+export async function apiListParses(sessionId: string | number, params: { page?: number; pageSize?: number } = {}): Promise<{ items: AiParseJob[]; total: number }> {
+  const q = new URLSearchParams();
+  if (params.page) q.set('page', String(params.page));
+  if (params.pageSize) q.set('pageSize', String(params.pageSize));
+  return http(`/sessions/${sessionId}/parses?${q.toString()}`);
+}
+
+export async function apiGetParse(id: string | number): Promise<AiParseJob> {
+  return http(`/ai-parses/${id}`);
+}
+
+export async function apiCancelParse(id: string | number): Promise<AiParseJob> {
+  return http(`/ai-parses/${id}`, { method: 'DELETE' });
 }
 
 

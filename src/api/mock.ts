@@ -8,7 +8,7 @@ export const mockUsers: User[] = [
 ];
 
 export const mockMembers: Member[] = [
-  { id: 'm1', nickname: '鸣人', qq: '10001', status: 'normal', joinAt: new Date().toISOString(), role: 'member' },
+  { id: 'm1', nickname: '比杰qwq', qq: '10001', status: 'normal', joinAt: new Date().toISOString(), role: 'member' },
   { id: 'm2', nickname: '佐助', qq: '10002', status: 'normal', joinAt: new Date().toISOString(), role: 'member' },
   { id: 'm3', nickname: '小樱', qq: '10003', status: 'normal', joinAt: new Date().toISOString(), role: 'trainee' },
   { id: 'm4', nickname: '卡卡西', qq: '10004', status: 'left', joinAt: new Date().toISOString(), role: 'senior' },
@@ -31,6 +31,7 @@ export const mockParticipations: Participation[] = [
 ];
 
 export function login(username: string, _password: string): Promise<{ token: string; user: User } | null> {
+  void _password;
   // 简化：任意密码，用户名为 admin 才能登录
   if (username === 'admin') {
     return Promise.resolve({ token: 'mock-token', user: mockUsers[0] });
@@ -231,6 +232,92 @@ export function leaderboard(params: { typeId?: string; from?: string; to?: strin
       result = result.sort((a, b) => b.totalScore - a.totalScore);
   }
   return Promise.resolve(result);
+}
+
+// ============ AI 工作流 Mock ============
+export type ScreenshotStatus = 'pending' | 'processing' | 'parsed';
+export interface SessionScreenshot {
+  id: string;
+  sessionId: string;
+  fileName: string;
+  url: string;
+  status: ScreenshotStatus;
+  uploadedAt: string;
+  parsedPairs?: Array<{ name: string; score: number }>;
+}
+
+const mockSessionScreenshots: SessionScreenshot[] = [
+  {
+    id: 'img1',
+    sessionId: 's2',
+    fileName: 'battle-2025-08-06-1.png',
+    url: '/vite.svg',
+    status: 'parsed',
+    uploadedAt: new Date().toISOString(),
+    parsedPairs: [
+      { name: '比杰qwq', score: 96 },
+      { name: '佐助', score: 89 },
+      { name: '小樱', score: 72 },
+    ],
+  },
+  {
+    id: 'img2',
+    sessionId: 's2',
+    fileName: 'battle-2025-08-06-2.png',
+    url: '/vite.svg',
+    status: 'processing',
+    uploadedAt: new Date().toISOString(),
+  },
+  {
+    id: 'img3',
+    sessionId: 's1',
+    fileName: 'fortress-2025-08-09-1.png',
+    url: '/vite.svg',
+    status: 'parsed',
+    uploadedAt: new Date().toISOString(),
+    parsedPairs: [
+      { name: '鸣人', score: 90 },
+      { name: '卡卡西', score: 100 },
+    ],
+  },
+];
+
+export function listSessionScreenshots(sessionId: string): Promise<SessionScreenshot[]> {
+  const list = mockSessionScreenshots.filter(x => x.sessionId === sessionId);
+  if (list.length) return Promise.resolve(list);
+  // 如果该场次暂无截图，返回内置的示例数据，便于联调 UI/交互
+  const now = new Date().toISOString();
+  const pairs = mockMembers
+    .filter(m => m.status === 'normal')
+    .slice(0, 3)
+    .map((m, i) => ({ name: m.nickname, score: 85 + i * 3 }));
+  return Promise.resolve([
+    { id: `demo1-${sessionId}`, sessionId, fileName: 'demo-1.png', url: '/vite.svg', status: 'parsed', uploadedAt: now, parsedPairs: pairs },
+    { id: `demo2-${sessionId}`, sessionId, fileName: 'demo-2.png', url: '/vite.svg', status: 'processing', uploadedAt: now },
+  ]);
+}
+
+export function enqueueSessionScreenshots(sessionId: string, items: Array<{ fileName: string; url: string }>): Promise<SessionScreenshot[]> {
+  const now = new Date().toISOString();
+  items.forEach((it, idx) => {
+    mockSessionScreenshots.push({
+      id: `up-${sessionId}-${Date.now()}-${idx}`,
+      sessionId,
+      fileName: it.fileName,
+      url: it.url,
+      status: 'processing',
+      uploadedAt: now,
+    });
+  });
+  return Promise.resolve(mockSessionScreenshots.filter(x => x.sessionId === sessionId));
+}
+
+export function cancelSessionScreenshot(sessionId: string, imageId: string): Promise<SessionScreenshot[]> {
+  const idx = mockSessionScreenshots.findIndex(x => x.id === imageId && x.sessionId === sessionId);
+  if (idx >= 0) {
+    mockSessionScreenshots.splice(idx, 1);
+  }
+  return Promise.resolve(mockSessionScreenshots.filter(x => x.sessionId === sessionId));
 }
 
 

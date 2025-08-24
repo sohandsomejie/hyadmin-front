@@ -63,6 +63,23 @@ export interface LeaderboardItem {
   avgScore: number;
   attendance: number; // 0-1
   times: number;
+  attendedTimes?: number;
+  leaveTimes?: number;
+  unknownTimes?: number;
+}
+
+// AI 图片解析
+export type AiParseStatus = 'queued' | 'processing' | 'succeeded' | 'failed' | 'canceled' | 'timeout';
+export interface AiParseJob<TData = unknown> {
+  id: string | number;
+  sessionId?: string | number;
+  url: string; // 图片地址，相对或绝对
+  mime?: string;
+  status: AiParseStatus;
+  data?: TData | null; // AI 输出
+  error?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 

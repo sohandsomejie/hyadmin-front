@@ -1,12 +1,13 @@
-import { Card, Descriptions, Segmented, Space, Statistic, Table, Select, Tag } from 'antd';
+import { Card, Descriptions, Segmented, Space, Statistic, Table, Select, Tag, Button, Popconfirm, message } from 'antd';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import type { Member, LeaderboardItem, ParticipationWithSession, ActivityType } from '../../types';
-import { apiGetMember, apiLeaderboard, apiListActivityTypes, apiListMemberParticipations } from '../../api';
+import { apiGetMember, apiLeaderboard, apiListActivityTypes, apiListMemberParticipations, apiDeleteMember } from '../../api';
 import dayjs from 'dayjs';
 
 export default function MemberDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [member, setMember] = useState<Member | undefined>();
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
   const [types, setTypes] = useState<ActivityType[]>([]);
@@ -55,15 +56,35 @@ export default function MemberDetailPage() {
         <Descriptions.Item label="角色">{{ trainee: '学员', senior: '高层', member: '成员', leader: '首领' }[member.role || 'member']}</Descriptions.Item>
       </Descriptions>
 
+      <Space>
+        <Popconfirm
+          title="确认删除该成员？"
+          okText="删除"
+          okType="danger"
+          cancelText="取消"
+          onConfirm={async () => {
+            if (!id) return;
+            await apiDeleteMember(id);
+            message.success('已删除成员');
+            navigate('/members');
+          }}
+        >
+          <Button danger>删除成员</Button>
+        </Popconfirm>
+      </Space>
+
       <Card title="统计">
         <Space>
-          <Segmented options={[{label:'月度',value:'month'},{label:'季度',value:'quarter'},{label:'年度',value:'year'}]} value={period} onChange={v => setPeriod(v as any)} />
+          <Segmented options={[{label:'月度',value:'month'},{label:'季度',value:'quarter'},{label:'年度',value:'year'}]} value={period} onChange={(v) => setPeriod(v as 'month'|'quarter'|'year')} />
           <Select placeholder="活动类型" style={{ width: 200 }} value={typeId} onChange={setTypeId} options={types.map(t => ({ label: t.name, value: t.id }))} />
         </Space>
         <Space wrap style={{ marginTop: 16 }}>
           <Statistic title="总分" value={stats?.totalScore || 0} precision={0} />
           <Statistic title="平均分" value={stats?.avgScore || 0} precision={2} />
-          <Statistic title="参与次数" value={stats?.times || 0} />
+          <Statistic title="总场次" value={stats?.times || 0} />
+          <Statistic title="实际参与" value={stats?.attendedTimes || 0} />
+          <Statistic title="请假次数" value={stats?.leaveTimes || 0} />
+          <Statistic title="未知次数" value={stats?.unknownTimes || 0} />
           <Statistic title="出勤率" value={(stats?.attendance || 0) * 100} precision={2} suffix="%" />
         </Space>
       </Card>

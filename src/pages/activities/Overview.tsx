@@ -69,7 +69,8 @@ export default function ActivitiesOverviewPage() {
         const sessions = sessionsByType[t.id] || [];
         const last = sessions.slice().sort((a, b) => dayjs(b.startAt).valueOf() - dayjs(a.startAt).valueOf())[0];
         if (!last) continue;
-        const ps = await apiListParticipations(last.id);
+        const resP = await apiListParticipations(last.id, { page: 1, pageSize: 1000 });
+        const ps = resP.items;
         const counts = { participated: 0, leave: 0, unknown: 0, unset: 0 } as Record<'participated'|'leave'|'unknown'|'unset', number>;
         ps.forEach(p => { counts[p.status as keyof typeof counts] = (counts[p.status as keyof typeof counts] || 0) + 1; });
         // 取最高分并列全部
@@ -124,7 +125,7 @@ export default function ActivitiesOverviewPage() {
       </Row>
 
       <Modal title={editing ? '修改活动' : '新增活动'} open={open} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnClose>
-        <Form form={form} layout="vertical" onFinish={async (values: any) => {
+        <Form form={form} layout="vertical" onFinish={async (values: { id?: string; name: string; code?: string; enabled?: boolean; durationMinutes: number; weekday: number; time: dayjs.Dayjs }) => {
           await apiUpsertActivityType({ id: values.id, name: values.name, code: values.code || values.name, scheduleRule: { weekday: values.weekday, time: values.time?.format('HH:mm') }, enabled: values.enabled, durationMinutes: values.durationMinutes });
           message.success(editing ? '已修改活动' : '已新增活动');
           setOpen(false);
